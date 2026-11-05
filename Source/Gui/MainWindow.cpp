@@ -378,7 +378,9 @@ void MainWindow::BindDevice()
     }
 
     _deviceQueryThread = std::jthread{[this](std::stop_token stopToken) {
+#if defined APD_OS_WIN
         Core::OS::Windows::Winrt::Initialize();
+#endif
         auto devices = Core::AirPods::GetDevices();
         if (stopToken.stop_requested()) {
             return;

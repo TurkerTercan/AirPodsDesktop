@@ -184,9 +184,6 @@ std::optional<ReleaseInfo> ParseSingleReleaseResponse(const std::string &text)
             LOG(Info, "ParseSRResponse: Asset name: '{}', size: {}, downloadUrl: '{}'.", fileName,
                 fileSize, downloadUrl);
 
-#if !defined APD_OS_WIN
-    #error "Need to port."
-#endif
             // AirPodsDesktop-x.x.x-win64.exe
             //
             if (!IsCompatibleInstallerAsset(fileName, CONFIG_CPACK_SYSTEM_NAME)) {

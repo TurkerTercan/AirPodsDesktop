@@ -1,5 +1,44 @@
 # Build Instructions
 
+## Linux (Ubuntu 24.04) — port in progress
+
+The build system accepts 64-bit Linux in addition to Windows x64, but the platform
+implementations are being ported (`*_linux.cpp` files under `Source/Core/`). Until those land, the
+Linux build stops at the explicit `#error "Need to port."` sites; the Windows build is unaffected.
+
+Prerequisites:
+
+- CMake 3.20 or newer and a C++20 compiler (GCC 13 or newer).
+- Qt 6.8 with Core, Gui, Widgets, Svg, Multimedia and LinguistTools. Ubuntu 24.04 ships Qt 6.4, so
+  install Qt 6.8 separately, for example with `aqtinstall`:
+
+  ```bash
+  uv tool run --from aqtinstall aqt install-qt linux desktop 6.8.3 linux_gcc_64 \
+    -O ~/.local/Qt --modules qtmultimedia qtsvg qttools
+  ```
+
+- System headers:
+
+  ```bash
+  sudo apt install build-essential cmake libssl-dev zlib1g-dev libboost-dev \
+    libbluetooth-dev libdbus-1-dev libglib2.0-dev libpipewire-0.3-dev libpulse-dev \
+    libgl-dev libglvnd-dev libglx-dev libopengl-dev libegl-dev
+  ```
+
+Configure and build:
+
+```bash
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_PREFIX_PATH=~/.local/Qt/6.8.3/gcc_64 -DAPD_QT_DEPLOY=OFF
+cmake --build Build -j"$(nproc)"
+```
+
+The Linux platform files are added to `apd_core` automatically as they appear in the source tree.
+Current Linux status: the application builds and starts, scans BLE advertisements through BlueZ,
+shows battery state in the tray, controls MPRIS players for ear detection, and writes an XDG
+autostart entry. Quick Connect uses the null backend, the taskbar battery dock is Windows-only,
+and the updater finds no Linux release assets.
+
 ## Windows prerequisites
 
 AirPodsDesktop uses C++20 and builds for **Windows x64** with:

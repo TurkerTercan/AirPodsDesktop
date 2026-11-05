@@ -48,17 +48,27 @@ project(
     HOMEPAGE_URL "https://github.com/${APD_GITHUB_OWNER}/${APD_GITHUB_REPOSITORY}"
 )
 
-if (NOT WIN32 OR NOT MSVC)
-    message(FATAL_ERROR "AirPodsDesktop requires 64-bit Windows and MSVC 2022.")
-endif()
-if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(FATAL_ERROR "AirPodsDesktop no longer supports Win32. Configure with -A x64.")
-endif()
-if (NOT CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
-    message(FATAL_ERROR "AirPodsDesktop supports the x64 ABI only; ARM64 is not supported.")
-endif()
-if (MSVC_VERSION LESS 1930)
-    message(FATAL_ERROR "AirPodsDesktop requires Visual Studio 2022 or newer.")
+if (WIN32)
+    if (NOT MSVC)
+        message(FATAL_ERROR "AirPodsDesktop requires MSVC 2022 or newer on Windows.")
+    endif()
+    if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+        message(FATAL_ERROR "AirPodsDesktop no longer supports Win32. Configure with -A x64.")
+    endif()
+    if (NOT CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
+        message(FATAL_ERROR "AirPodsDesktop supports the x64 ABI only; ARM64 is not supported.")
+    endif()
+    if (MSVC_VERSION LESS 1930)
+        message(FATAL_ERROR "AirPodsDesktop requires Visual Studio 2022 or newer.")
+    endif()
+    set(APD_OS_WIN TRUE)
+elseif (UNIX AND NOT APPLE)
+    if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+        message(FATAL_ERROR "AirPodsDesktop supports 64-bit Linux only.")
+    endif()
+    set(APD_OS_LINUX TRUE)
+else()
+    message(FATAL_ERROR "AirPodsDesktop supports Windows x64 and Linux x64 only.")
 endif()
 
 include(FetchContent)
@@ -167,6 +177,9 @@ endif()
 # Qt
 #
 set(APD_QT_COMPONENTS Core Gui Widgets Svg Multimedia LinguistTools)
+if (APD_OS_LINUX)
+    list(APPEND APD_QT_COMPONENTS DBus)
+endif()
 find_package(Qt6 6.8 COMPONENTS ${APD_QT_COMPONENTS} REQUIRED)
 if (APD_BUILD_TESTS)
     find_package(Qt6 6.8 COMPONENTS Test REQUIRED)
@@ -174,7 +187,9 @@ endif()
 
 # spdlog
 #
-add_compile_definitions(SPDLOG_WCHAR_TO_UTF8_SUPPORT SPDLOG_WCHAR_FILENAMES)
+if (WIN32)
+    add_compile_definitions(SPDLOG_WCHAR_TO_UTF8_SUPPORT SPDLOG_WCHAR_FILENAMES)
+endif()
 # 
 # TODO: Commented out since I don't how to enable `SPDLOG_WCHAR_FILENAMES` for vcpkg, I have tried
 #       `set(SPDLOG_WCHAR_FILENAMES ON)` and `add_compile_definitions(SPDLOG_WCHAR_FILENAMES)`,
@@ -284,6 +299,8 @@ endif()
 #
 if (MSVC)
     set(APD_STACKTRACE_COMPONENT stacktrace_windbg)
+elseif (APD_OS_LINUX)
+    set(APD_STACKTRACE_COMPONENT stacktrace_backtrace)
 endif()
 
 # Find boost-stacktrace using pkg-config or manually
@@ -295,10 +312,19 @@ find_path(BOOST_PFR_INCLUDE_DIR boost/pfr.hpp)
 include_directories(${BOOST_PFR_INCLUDE_DIR})
 
 # Create interface targets for boost libraries
-if(NOT TARGET Boost::stacktrace_windbg)
-    add_library(Boost::stacktrace_windbg INTERFACE IMPORTED)
-    set_target_properties(Boost::stacktrace_windbg PROPERTIES
+if(NOT TARGET Boost::${APD_STACKTRACE_COMPONENT})
+    add_library(Boost::${APD_STACKTRACE_COMPONENT} INTERFACE IMPORTED)
+    set_target_properties(Boost::${APD_STACKTRACE_COMPONENT} PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${BOOST_STACKTRACE_INCLUDE_DIR}")
+endif()
+
+if (APD_OS_LINUX)
+    # Boost.Stacktrace is header-only. The addr2line backend needs only libdl, unlike the
+    # libbacktrace backend which requires an extra library that is not commonly packaged.
+    set_target_properties(Boost::${APD_STACKTRACE_COMPONENT} PROPERTIES
+        INTERFACE_COMPILE_DEFINITIONS BOOST_STACKTRACE_USE_ADDR2LINE
+        INTERFACE_LINK_LIBRARIES dl)
+    find_package(Threads REQUIRED)
 endif()
 
 if(NOT TARGET Boost::pfr)
@@ -350,7 +376,6 @@ set(
     "Source/Gui/AnimationPlayback.cpp"
 
     "Source/Gui/TrayIcon.cpp"
-    "Source/Gui/TaskbarStatus.cpp"
     "Source/Gui/MainWindow.cpp"
     "Source/Gui/SelectWindow.cpp"
     "Source/Gui/UpdateWindow.cpp"
@@ -374,6 +399,9 @@ if (WIN32)
         "Source/Core/GlobalMedia_win.cpp"
         "Source/Core/QuickConnect_win.cpp"
     )
+    list(APPEND APD_GUI_CODE_FILES
+        "Source/Gui/TaskbarStatus.cpp"
+    )
     list(APPEND APD_APP_CODE_FILES
         "Source/Resource/Application.manifest"
         "Source/Resource/Resource.rc"
@@ -385,6 +413,23 @@ if (WIN32)
     # Workaround for: "_MSC_VER" is undefined in .rc files
     #
     set_source_files_properties("Source/Resource/Resource.rc" PROPERTIES COMPILE_FLAGS "/d_MSC_VER")
+elseif (APD_OS_LINUX)
+    set(
+        APD_LINUX_PLATFORM_CODE_FILES
+        "Source/Core/AutoStart_linux.cpp"
+        "Source/Core/Bluetooth_linux.cpp"
+        "Source/Core/GlobalMedia_linux.cpp"
+        "Source/Core/QuickConnect_linux.cpp"
+    )
+    # The port adds these incrementally; pick up each one as soon as it lands.
+    foreach (APD_FILE ${APD_LINUX_PLATFORM_CODE_FILES})
+        if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${APD_FILE}")
+            list(APPEND APD_CORE_CODE_FILES "${APD_FILE}")
+        endif()
+    endforeach()
+
+    # Header-only on Linux, but listed so AUTOMOC generates its meta-object.
+    list(APPEND APD_GUI_CODE_FILES "Source/Gui/TaskbarStatus.h")
 endif()
 
 ##################################################
@@ -514,6 +559,11 @@ if (WIN32)
     target_link_libraries(apd_core PRIVATE Ole32 Uuid Ksuser)
 endif()
 
+if (APD_OS_LINUX)
+    target_link_libraries(apd_support PUBLIC Threads::Threads)
+    target_link_libraries(apd_core PUBLIC Qt6::DBus Threads::Threads)
+endif()
+
 target_link_libraries(
     apd_presentation
 
@@ -564,6 +614,8 @@ foreach (APD_TARGET ${APD_INTERNAL_TARGETS} ${PROJECT_NAME})
             WIN32_LEAN_AND_MEAN
             NOMINMAX
         )
+    elseif (APD_OS_LINUX)
+        target_compile_definitions(${APD_TARGET} ${APD_HEADER_DEFINITION_VISIBILITY} APD_OS_LINUX)
     endif()
     if (MSVC)
         target_compile_definitions(${APD_TARGET} PRIVATE APD_MSVC)
@@ -603,6 +655,16 @@ if (MSVC)
             )
         endforeach()
     endif()
+elseif (APD_OS_LINUX)
+    if (APD_QT_DEPLOY)
+        qt_generate_deploy_app_script(
+            TARGET ${PROJECT_NAME}
+            OUTPUT_SCRIPT APD_QT_DEPLOY_SCRIPT
+            NO_UNSUPPORTED_PLATFORM_ERROR
+        )
+        install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
+        install(SCRIPT ${APD_QT_DEPLOY_SCRIPT})
+    endif()
 endif()
 
 add_custom_command(
@@ -623,6 +685,11 @@ add_custom_command(
 ##################################################
 # Installer generate
 #
+
+if (APD_GENERATE_INSTALLER AND NOT MSVC)
+    message(WARNING "APD_GENERATE_INSTALLER is only implemented for Windows/NSIS; disabling.")
+    set(APD_GENERATE_INSTALLER OFF)
+endif()
 
 if (APD_GENERATE_INSTALLER)
     set(CPACK_PACKAGE_VENDOR ${PROJECT_NAME})
