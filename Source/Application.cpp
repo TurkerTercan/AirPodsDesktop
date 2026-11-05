@@ -148,7 +148,7 @@ void ApdApplication::FirstTimeUse()
            "customize settings or quit."));
 }
 
-ApdApplication::ApdApplication(int argc, char *argv[]) : SingleApplication{argc, argv} {}
+ApdApplication::ApdApplication(int &argc, char *argv[]) : SingleApplication{argc, argv} {}
 
 bool ApdApplication::Prepare(int argc, char *argv[])
 {
