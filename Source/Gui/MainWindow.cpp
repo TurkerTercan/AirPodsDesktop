@@ -401,8 +401,8 @@ void MainWindow::ShowDeviceSelector(std::vector<Core::Bluetooth::Device> devices
     if (devices.empty()) {
         QMessageBox::warning(
             this, Config::ProgramName,
-            QMessageBox::tr("No paired device found.\n"
-                            "You need to pair your AirPods in Windows Bluetooth Settings first."));
+            tr("No paired device found.\n"
+               "You need to pair your AirPods in the system Bluetooth settings first."));
         return;
     }
 

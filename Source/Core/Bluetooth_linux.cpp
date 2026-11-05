@@ -70,19 +70,61 @@ QVariantMap GetManagedObjects()
         return {};
     }
 
+    // QtDBus demarshals the nested a{sa{sv}} values into opaque raw types when the whole
+    // argument is read into a QVariantMap, so the map is walked by hand to get real properties.
     const auto arg = reply.arguments().at(0).value<QDBusArgument>();
     QVariantMap objects;
     arg.beginMap();
     while (!arg.atEnd()) {
         arg.beginMapEntry();
         QString path;
+        arg >> path;
+
         QVariantMap interfaces;
-        arg >> path >> interfaces;
-        arg.endMapEntry();
+        arg.beginMap();
+        while (!arg.atEnd()) {
+            arg.beginMapEntry();
+            QString interface;
+            arg >> interface;
+
+            QVariantMap properties;
+            arg.beginMap();
+            while (!arg.atEnd()) {
+                arg.beginMapEntry();
+                QString name;
+                QVariant value;
+                arg >> name >> value;
+                arg.endMapEntry();
+                properties.insert(name, value);
+            }
+            arg.endMap();
+            interfaces.insert(interface, properties);
+            arg.endMapEntry();
+        }
+        arg.endMap();
+
         objects.insert(path, interfaces);
+        arg.endMapEntry();
     }
     arg.endMap();
     return objects;
+}
+
+QVariantMap ReadDeviceProperties(const QString &objectPath)
+{
+    auto message = QDBusMessage::createMethodCall(
+        kBluezService, objectPath, "org.freedesktop.DBus.Properties", "GetAll");
+    message.setArguments({QLatin1String{kDeviceInterface}});
+
+    const auto reply = QDBusConnection::systemBus().call(message, QDBus::Block, 3000);
+    if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty()) {
+        return {};
+    }
+
+    const auto arg = reply.arguments().at(0).value<QDBusArgument>();
+    QVariantMap properties;
+    arg >> properties;
+    return properties;
 }
 
 std::map<uint16_t, std::vector<uint8_t>> ParseManufacturerData(const QVariant &value)
@@ -95,10 +137,13 @@ std::map<uint16_t, std::vector<uint8_t>> ParseManufacturerData(const QVariant &v
         while (!arg.atEnd()) {
             arg.beginMapEntry();
             ushort companyId = 0;
-            QByteArray data;
+            // BlueZ declares this map as a{qv}: the payload is a variant holding an array of
+            // bytes, so reading it straight into a QByteArray would leave it empty.
+            QVariant data;
             arg >> companyId >> data;
             arg.endMapEntry();
-            result[companyId] = std::vector<uint8_t>{data.begin(), data.end()};
+            const auto bytes = data.toByteArray();
+            result[companyId] = std::vector<uint8_t>{bytes.begin(), bytes.end()};
         }
         arg.endMap();
         return result;
@@ -442,7 +487,13 @@ public slots:
 
     void OnInterfacesAdded(const QDBusObjectPath &objectPath, const QVariantMap &interfaces)
     {
-        const auto props = interfaces.value(QLatin1String{kDeviceInterface}).toMap();
+        if (!interfaces.contains(QLatin1String{kDeviceInterface})) {
+            return;
+        }
+
+        // The properties nested in this signal are demarshalled into opaque raw types, so the
+        // device is queried again to obtain usable values.
+        const auto props = ReadDeviceProperties(objectPath.path());
         if (props.isEmpty() || !props.contains("ManufacturerData")) {
             return;
         }
