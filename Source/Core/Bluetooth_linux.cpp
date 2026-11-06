@@ -247,6 +247,8 @@ public slots:
         }
 
         std::lock_guard<std::mutex> lock{_mutex};
+        // Every live Device owns exactly one sink; more means a sink outlived its device.
+        LOG(Debug, "Notifier: dispatching PropertiesChanged to {} sink(s)", _sinks.size());
         for (const auto &sink : _sinks) {
             if (state.has_value() && sink.onState) {
                 sink.onState(state.value());
@@ -283,10 +285,8 @@ Device::Device(const Device &rhs)
 }
 
 Device::Device(Device &&rhs) noexcept
-    : _objectPath{std::move(rhs._objectPath)}, _notifier{std::move(rhs._notifier)},
-      _nextSinkId{rhs._nextSinkId}
 {
-    Attach();
+    MoveFrom(std::move(rhs));
 }
 
 Device &Device::operator=(const Device &rhs)
@@ -343,6 +343,11 @@ void Device::CopyFrom(const Device &rhs)
 
 void Device::MoveFrom(Device &&rhs) noexcept
 {
+    // Detach the source before its notifier changes hands. A moved-from device no longer has a
+    // notifier, so its destructor would skip RemoveSink() and leave a sink registered in the
+    // notifier that still refers to the freed source object. The next PropertiesChanged would
+    // then invoke that dead object - in practice a std::system_error from its invalid mutex.
+    rhs.Detach();
     _objectPath = std::move(rhs._objectPath);
     _notifier = std::move(rhs._notifier);
     _nextSinkId = rhs._nextSinkId;
