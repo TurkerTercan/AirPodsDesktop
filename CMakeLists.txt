@@ -802,6 +802,9 @@ target_link_libraries(
 
 if (APD_BUILD_TESTS)
     include(CTest)
+    # A fetched dependency (cxxopts) also declares BUILD_TESTING and can cache it OFF before
+    # include(CTest) runs, which would silently skip enable_testing() and register no tests.
+    enable_testing()
     add_subdirectory(Tests)
 endif()
 
