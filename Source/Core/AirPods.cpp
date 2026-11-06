@@ -144,7 +144,9 @@ void Manager::OnBoundDeviceAddressChanged(uint64_t address)
     LOG(Info, "Bind a new device.");
 
     _deviceLookupThread = std::jthread{[this, address](std::stop_token stopToken) {
+#if defined APD_OS_WIN
         OS::Windows::Winrt::Initialize();
+#endif
         auto device = Bluetooth::DeviceManager::FindDevice(address);
         if (stopToken.stop_requested()) {
             return;

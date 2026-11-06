@@ -516,13 +516,20 @@ void AirPodsDomainTests::ParsesGitHubReleaseMetadata()
 
     QVERIFY(release.has_value());
     QCOMPARE(release->version, QVersionNumber(0, 5, 0));
+    QCOMPARE(release->changeLog, QString{"- Add automatic updates"});
+#if defined APD_OS_WIN
     QCOMPARE(release->fileName, QString{"AirPodsDesktop-0.5.0-win64.exe"});
     QCOMPARE(release->fileSize, size_t{123456});
     QCOMPARE(
         release->sha256,
         QString{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"});
-    QCOMPARE(release->changeLog, QString{"- Add automatic updates"});
     QVERIFY(release->CanAutoUpdate());
+#else
+    // The fixture asset is a Windows installer, and the updater only accepts assets built for
+    // the platform it runs on.
+    QVERIFY(release->fileName.isEmpty());
+    QVERIFY(!release->CanAutoUpdate());
+#endif
     QVERIFY(!release->isPreRelease);
 
     const auto generatedNotes = QString{R"json({

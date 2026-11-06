@@ -37,6 +37,8 @@ TrayIcon::TrayIcon(
         ExecuteTrayActivation(_trayActivationState.OnSingleClickTimeout());
     });
 
+    connect(
+        _actionShowMainWindow, &QAction::triggered, this, &TrayIcon::ShowMainWindowRequested);
     connect(_actionNewVersion, &QAction::triggered, this, &TrayIcon::OnNewVersionClicked);
     connect(_actionLowAudioLatency, &QAction::triggered, this, [](bool enabled) {
         Core::Settings::ModifiableAccess()->low_audio_latency = enabled;
@@ -58,8 +60,11 @@ TrayIcon::TrayIcon(
     _actionNewVersion->setVisible(false);
     _actionLowAudioLatency->setCheckable(true);
 
-    _menu->addAction(_actionNewVersion);
+    // On Linux the StatusNotifier host (GNOME AppIndicator) only ever opens the context menu, so
+    // the activation signal cannot be relied on to reach the main window.
+    _menu->addAction(_actionShowMainWindow);
     _menu->addSeparator();
+    _menu->addAction(_actionNewVersion);
     _menu->addAction(_actionLowAudioLatency);
     _menu->addAction(_actionSettings);
     _menu->addSeparator();
@@ -437,7 +442,7 @@ void TrayIcon::OnQuickConnectOutcome(Core::QuickConnect::Outcome outcome, const 
         icon = QSystemTrayIcon::Warning;
         break;
     case Core::QuickConnect::Outcome::Failed:
-        text = tr("Windows could not connect to %1.").arg(deviceName);
+        text = tr("Could not connect to %1.").arg(deviceName);
         icon = QSystemTrayIcon::Warning;
         break;
     default:
