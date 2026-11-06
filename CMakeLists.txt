@@ -221,6 +221,9 @@ else()
         GIT_REPOSITORY "https://github.com/jarro2783/cxxopts.git"
         GIT_TAG "302302b30839505703d37fb82f536c53cf9172fa" # v2.2.1
     )
+    # Upstream defaults its test suite on, and its add_test entries point at an executable the
+    # shared output directory moves elsewhere, so they register as failing CTest cases.
+    set(CXXOPTS_BUILD_TESTS OFF)
     FetchContent_MakeAvailable(cxxopts)
     message("Fetch 'cxxopts' done.")
 
