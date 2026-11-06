@@ -673,6 +673,10 @@ private Q_SLOTS:
         window.resize(640, 420);
         window.show();
         QVERIFY(QTest::qWaitForWindowExposed(&window));
+        // Application-level focus only exists in an active window, which X11 does not give a
+        // window just for being shown.
+        window.activateWindow();
+        QVERIFY(QTest::qWaitForWindowActive(&window));
 
         auto *languages = window.findChild<QComboBox *>("cbLanguages");
         QVERIFY(languages != nullptr);
