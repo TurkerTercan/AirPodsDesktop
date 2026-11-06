@@ -39,6 +39,8 @@
 #include "Core/QuickConnect.h"
 #if defined APD_OS_WIN
     #include "Core/QuickConnect_win.h"
+#elif defined APD_OS_LINUX
+    #include "Core/QuickConnect_linux.h"
 #endif
 #include "Core/Settings.h"
 #include "Core/Update.h"
@@ -199,6 +201,8 @@ bool ApdApplication::Prepare(int argc, char *argv[])
 
 #if defined APD_OS_WIN
     _quickConnectBackend = std::make_shared<Core::QuickConnect::WindowsBackend>();
+#elif defined APD_OS_LINUX
+    _quickConnectBackend = Core::QuickConnect::CreateLinuxBackend();
 #else
     _quickConnectBackend = std::make_shared<Core::QuickConnect::NullBackend>();
 #endif

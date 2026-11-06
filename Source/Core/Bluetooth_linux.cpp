@@ -36,6 +36,7 @@
 #include <QThread>
 #include <QVariantMap>
 
+#include "BluezObjectManager.h"
 #include "../Logger.h"
 
 namespace Core::Bluetooth {
@@ -45,6 +46,8 @@ namespace {
 constexpr auto kBluezService = "org.bluez";
 constexpr auto kDeviceInterface = "org.bluez.Device1";
 constexpr auto kAdapterInterface = "org.bluez.Adapter1";
+
+using Core::Bluez::GetManagedObjects;
 
 QVariant ReadDeviceProperty(const QString &objectPath, const char *name)
 {
@@ -59,55 +62,6 @@ uint64_t ParseAddress(const QString &address)
     bool ok = false;
     const auto value = normalized.toULongLong(&ok, 16);
     return ok ? value : 0;
-}
-
-QVariantMap GetManagedObjects()
-{
-    const auto message = QDBusMessage::createMethodCall(
-        kBluezService, "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
-    const auto reply = QDBusConnection::systemBus().call(message, QDBus::Block, 5000);
-    if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty()) {
-        return {};
-    }
-
-    // QtDBus demarshals the nested a{sa{sv}} values into opaque raw types when the whole
-    // argument is read into a QVariantMap, so the map is walked by hand to get real properties.
-    const auto arg = reply.arguments().at(0).value<QDBusArgument>();
-    QVariantMap objects;
-    arg.beginMap();
-    while (!arg.atEnd()) {
-        arg.beginMapEntry();
-        QString path;
-        arg >> path;
-
-        QVariantMap interfaces;
-        arg.beginMap();
-        while (!arg.atEnd()) {
-            arg.beginMapEntry();
-            QString interface;
-            arg >> interface;
-
-            QVariantMap properties;
-            arg.beginMap();
-            while (!arg.atEnd()) {
-                arg.beginMapEntry();
-                QString name;
-                QVariant value;
-                arg >> name >> value;
-                arg.endMapEntry();
-                properties.insert(name, value);
-            }
-            arg.endMap();
-            interfaces.insert(interface, properties);
-            arg.endMapEntry();
-        }
-        arg.endMap();
-
-        objects.insert(path, interfaces);
-        arg.endMapEntry();
-    }
-    arg.endMap();
-    return objects;
 }
 
 QVariantMap ReadDeviceProperties(const QString &objectPath)
