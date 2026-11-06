@@ -20,6 +20,7 @@
 
 #include <QGuiApplication>
 #include <QMessageBox>
+#include <QStandardPaths>
 #include <QStyleFactory>
 
 #include <Config.h>
@@ -352,11 +353,24 @@ void ApdApplication::SetTranslator(const QLocale &locale)
 
     std::unique_ptr<QTranslator> translator;
     if (index != 0) {
-        QDir translationFolder = QCoreApplication::applicationDirPath();
-        translationFolder.cd("translations");
+        // A portable build keeps the .qm files beside the executable; an installed package puts
+        // them under the XDG data directories.
+        QStringList translationFolders{
+            QCoreApplication::applicationDirPath() + QStringLiteral("/translations")};
+        for (const auto &location :
+             QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation)) {
+            translationFolders.append(location + QStringLiteral("/airpodsdesktop/translations"));
+        }
 
         translator = std::make_unique<QTranslator>();
-        if (!translator->load(locale, "apd", "_", translationFolder.absolutePath())) {
+        bool loaded = false;
+        for (const auto &folder : translationFolders) {
+            if (translator->load(locale, "apd", "_", folder)) {
+                loaded = true;
+                break;
+            }
+        }
+        if (!loaded) {
             LOG(Warn, "Failed to load translation for locale '{}', keep current language",
                 localeName);
             return;

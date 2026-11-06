@@ -470,9 +470,16 @@ AsyncChecker::~AsyncChecker()
 
 void AsyncChecker::Start()
 {
+#if defined APD_OS_WIN
     // clang-format off
     _timer.Start(kInterval, [this] { Checker(); }, true);
     // clang-format on
+#else
+    // Published releases only carry Windows installers, which `IsCompatibleInstallerAsset` filters
+    // out on every other platform. Checking would send an hourly request that can never produce an
+    // update, so stay quiet here until comparable packages are published.
+    LOG(Info, "Update checks are disabled on this platform.");
+#endif
 }
 
 void AsyncChecker::Stop()

@@ -97,3 +97,26 @@ CTest runs the domain, quick-connect, animation, and UI rendering suites registe
 [Tests/CMakeLists.txt](/Tests/CMakeLists.txt). Animation and UI rendering tests need an
 interactive Windows desktop; animation tests also use the Windows multimedia backend.
 Qt runtime DLLs must be deployed beside the test executables or available on `PATH`.
+
+## Package for Linux
+
+The Linux install rules produce a relocatable bundle: the executable with a private copy of the Qt
+runtime in `lib/airpodsdesktop` (only the libraries the executable and its plugins actually load),
+translations, licenses, a desktop entry, and the icon. `cpack` turns that tree into a `.deb` and a
+`.tar.gz` in `Build/Installer/`:
+
+```bash
+cmake --build Build -j"$(nproc)"
+cd Build && cpack
+```
+
+`cmake --install Build --prefix ~/.local --component AirPodsDesktop` installs the same tree for the
+current user, and `~/.local/bin/airpodsdesktop` launches it from any prefix. The component selects
+only the application; the fetched third-party libraries have install rules of their own. The bundle
+carries its own Qt (`qt.conf` plus `$ORIGIN` runpaths), so no Qt installation is needed on the
+target machine.
+
+The `.deb` dependency list is generated with `dpkg-shlibdeps` from the build machine, so a package
+built on Ubuntu 24.04 names the `t64` library packages and will not install on older releases. Build
+distribution packages with `-DCMAKE_BUILD_TYPE=Release`; the install step strips the executable
+unless the build type is `Debug`.
