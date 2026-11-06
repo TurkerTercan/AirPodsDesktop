@@ -53,7 +53,10 @@ void AnimationPlayback::SetAnimation(const AnimationPresentation &presentation)
     _presentation = presentation;
     _retries = 0;
     _view.SetRemoveEnclosedBackground(presentation.removeEnclosedBackground);
-    _view.SetFallbackImage(QImage{presentation.FallbackResource()});
+    // An empty presentation (no device bound or connected) has no fallback artwork;
+    // loading an empty path would only make QImage log "No file name specified".
+    const auto fallbackResource = presentation.FallbackResource();
+    _view.SetFallbackImage(fallbackResource.isEmpty() ? QImage{} : QImage{fallbackResource});
     if (_active) {
         StartAttempt();
     }
