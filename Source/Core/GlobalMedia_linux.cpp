@@ -23,8 +23,8 @@
 #include <mutex>
 
 #include <QDBusConnection>
-#include <QDBusConnectionInterface>
-#include <QDBusInterface>
+#include <QDBusMessage>
+#include <QDBusVariant>
 #include <QStringList>
 
 #include "../Logger.h"
@@ -37,43 +37,102 @@ constexpr auto kMprisServicePrefix = "org.mpris.MediaPlayer2.";
 constexpr auto kMprisPath = "/org/mpris/MediaPlayer2";
 constexpr auto kMprisPlayerInterface = "org.mpris.MediaPlayer2.Player";
 
-QStringList MprisServices()
-{
-    const auto reply = QDBusConnection::sessionBus().interface()->registeredServiceNames();
-    if (!reply.isValid()) {
-        return {};
-    }
+// These calls run on the GUI thread, because that is where advertisements are processed. A media
+// player that stops answering must delay the interface by a bounded amount, not by QtDBus's
+// 25-second default.
+constexpr int kCallTimeoutMs = 1'000;
 
-    QStringList result;
-    for (const auto &service : reply.value()) {
-        if (service.startsWith(kMprisServicePrefix)) {
-            result.append(service);
+class SessionMprisBus final : public Details::MprisBus
+{
+public:
+    QStringList ListPlayers() const override
+    {
+        const auto message = QDBusMessage::createMethodCall(
+            QStringLiteral("org.freedesktop.DBus"), QStringLiteral("/org/freedesktop/DBus"),
+            QStringLiteral("org.freedesktop.DBus"), QStringLiteral("ListNames"));
+
+        const auto reply =
+            QDBusConnection::sessionBus().call(message, QDBus::Block, kCallTimeoutMs);
+        if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty()) {
+            return {};
         }
-    }
-    return result;
-}
 
-QString PlaybackStatus(const QString &service)
-{
-    const QDBusInterface player{service, kMprisPath, kMprisPlayerInterface,
-                                QDBusConnection::sessionBus()};
-    if (!player.isValid()) {
-        return {};
+        QStringList result;
+        for (const auto &service : reply.arguments().at(0).toStringList()) {
+            if (service.startsWith(kMprisServicePrefix)) {
+                result.append(service);
+            }
+        }
+        return result;
     }
-    return player.property("PlaybackStatus").toString();
-}
 
-void TogglePlayback(const QString &service)
-{
-    QDBusInterface player{service, kMprisPath, kMprisPlayerInterface,
-                          QDBusConnection::sessionBus()};
-    if (!player.isValid()) {
-        return;
+    QString PlaybackStatus(const QString &service) const override
+    {
+        auto message = QDBusMessage::createMethodCall(
+            service, kMprisPath, QStringLiteral("org.freedesktop.DBus.Properties"),
+            QStringLiteral("Get"));
+        message.setArguments(
+            {QString::fromLatin1(kMprisPlayerInterface), QStringLiteral("PlaybackStatus")});
+
+        const auto reply =
+            QDBusConnection::sessionBus().call(message, QDBus::Block, kCallTimeoutMs);
+        if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty()) {
+            // A confined player, such as a snap package, refuses messages from unconfined
+            // processes. Say why instead of quietly treating it as "not playing".
+            LOG(Warn, "Cannot read MPRIS playback status from '{}': {} '{}'.",
+                service.toStdString(), reply.errorName().toStdString(),
+                reply.errorMessage().toStdString());
+            return {};
+        }
+
+        // Properties.Get answers with a variant, which QtDBus delivers in its own wrapper type.
+        auto value = reply.arguments().at(0);
+        if (value.metaType() == QMetaType::fromType<QDBusVariant>()) {
+            value = value.value<QDBusVariant>().variant();
+        }
+        return value.toString();
     }
-    player.asyncCall("PlayPause");
-}
+
+    void TogglePlayback(const QString &service) override
+    {
+        // Fire and forget: the player's reply carries nothing we use, and waiting for it would
+        // extend the GUI-thread stall.
+        QDBusConnection::sessionBus().send(QDBusMessage::createMethodCall(
+            service, kMprisPath, QString::fromLatin1(kMprisPlayerInterface),
+            QStringLiteral("PlayPause")));
+    }
+};
 
 } // namespace
+
+namespace Details {
+
+namespace {
+
+std::mutex g_busMutex;
+std::shared_ptr<MprisBus> g_injectedBus;
+
+} // namespace
+
+std::shared_ptr<MprisBus> GetMprisBus()
+{
+    std::lock_guard<std::mutex> lock{g_busMutex};
+
+    if (g_injectedBus != nullptr) {
+        return g_injectedBus;
+    }
+
+    static const auto sessionBus = std::make_shared<SessionMprisBus>();
+    return sessionBus;
+}
+
+void SetMprisBus(std::shared_ptr<MprisBus> bus)
+{
+    std::lock_guard<std::mutex> lock{g_busMutex};
+    g_injectedBus = std::move(bus);
+}
+
+} // namespace Details
 
 struct Controller::Impl {
     std::mutex mutex;
@@ -88,38 +147,40 @@ Controller::~Controller() = default;
 
 void Controller::Pause()
 {
+    const auto bus = Details::GetMprisBus();
     std::lock_guard<std::mutex> lock{_impl->mutex};
 
     _impl->pausedServices.clear();
 
-    for (const auto &service : MprisServices()) {
-        if (PlaybackStatus(service) != QStringLiteral("Playing")) {
+    for (const auto &service : bus->ListPlayers()) {
+        if (bus->PlaybackStatus(service) != QStringLiteral("Playing")) {
             continue;
         }
 
         LOG(Info, "Pause MPRIS player '{}'.", service.toStdString());
-        TogglePlayback(service);
+        bus->TogglePlayback(service);
         _impl->pausedServices.append(service);
     }
 }
 
 void Controller::Play()
 {
+    const auto bus = Details::GetMprisBus();
     std::lock_guard<std::mutex> lock{_impl->mutex};
 
-    const auto services = MprisServices();
+    const auto services = bus->ListPlayers();
     QStringList stillPaused;
 
     for (const auto &service : _impl->pausedServices) {
         if (!services.contains(service)) {
             continue;
         }
-        if (PlaybackStatus(service) != QStringLiteral("Paused")) {
+        if (bus->PlaybackStatus(service) != QStringLiteral("Paused")) {
             continue;
         }
 
         LOG(Info, "Resume MPRIS player '{}'.", service.toStdString());
-        TogglePlayback(service);
+        bus->TogglePlayback(service);
         stillPaused.append(service);
     }
 

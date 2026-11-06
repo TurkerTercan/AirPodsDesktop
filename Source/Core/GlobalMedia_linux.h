@@ -24,10 +24,33 @@
 
 #include <memory>
 
+#include <QString>
+#include <QStringList>
+
 #include "../Helper.h"
 #include "GlobalMedia_abstract.h"
 
 namespace Core::GlobalMedia {
+
+namespace Details {
+
+// Indirection over the MPRIS session-bus calls so the pause/resume bookkeeping can be exercised
+// without touching the real media players. Tests inject their own implementation.
+class MprisBus
+{
+public:
+    virtual ~MprisBus() = default;
+
+    virtual QStringList ListPlayers() const = 0;
+    virtual QString PlaybackStatus(const QString &service) const = 0;
+    virtual void TogglePlayback(const QString &service) = 0;
+};
+
+std::shared_ptr<MprisBus> GetMprisBus();
+// Pass nullptr to restore the session-bus implementation.
+void SetMprisBus(std::shared_ptr<MprisBus> bus);
+
+} // namespace Details
 
 class Controller final : public Helper::Singleton<Controller>, public Details::ControllerAbstract
 {

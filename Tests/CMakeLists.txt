@@ -59,6 +59,22 @@ target_compile_definitions(
 
 add_test(NAME AnimationViewTests COMMAND AnimationViewTests)
 
+if (APD_OS_LINUX)
+    add_executable(GlobalMediaTests GlobalMediaTests.cpp)
+
+    target_link_libraries(
+        GlobalMediaTests
+
+        PRIVATE
+        apd_core
+        Qt6::Test
+    )
+
+    target_include_directories(GlobalMediaTests PRIVATE "${CMAKE_SOURCE_DIR}")
+
+    add_test(NAME GlobalMediaTests COMMAND GlobalMediaTests)
+endif()
+
 add_executable(UiRenderingTests UiRenderingTests.cpp ${CMAKE_SOURCE_DIR}/Source/Resource/Resource.qrc)
 
 target_link_libraries(
@@ -95,7 +111,12 @@ foreach(scale_factor 1 1.25 1.5 2)
     )
 endforeach()
 
-foreach(test_target AirPodsDomainTests QuickConnectTests AnimationViewTests UiRenderingTests)
+set(APD_TEST_TARGETS AirPodsDomainTests QuickConnectTests AnimationViewTests UiRenderingTests)
+if (APD_OS_LINUX)
+    list(APPEND APD_TEST_TARGETS GlobalMediaTests)
+endif()
+
+foreach(test_target ${APD_TEST_TARGETS})
     add_custom_command(
         TARGET ${test_target}
         POST_BUILD
