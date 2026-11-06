@@ -442,7 +442,7 @@ void TrayIcon::OnQuickConnectOutcome(Core::QuickConnect::Outcome outcome, const 
         icon = QSystemTrayIcon::Warning;
         break;
     case Core::QuickConnect::Outcome::Failed:
-        text = tr("Windows could not connect to %1.").arg(deviceName);
+        text = tr("Could not connect to %1.").arg(deviceName);
         icon = QSystemTrayIcon::Warning;
         break;
     default:
