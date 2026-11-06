@@ -1,10 +1,10 @@
 # Build Instructions
 
-## Linux (Ubuntu 24.04) — port in progress
+## Linux (Ubuntu 24.04)
 
-The build system accepts 64-bit Linux in addition to Windows x64, but the platform
-implementations are being ported (`*_linux.cpp` files under `Source/Core/`). Until those land, the
-Linux build stops at the explicit `#error "Need to port."` sites; the Windows build is unaffected.
+AirPodsDesktop builds and runs on 64-bit Linux. The platform implementations live in the
+`*_linux.cpp` files under `Source/Core/` and talk to BlueZ over D-Bus; ear detection drives the
+desktop's MPRIS players, and settings and autostart use the XDG directories.
 
 Prerequisites:
 
@@ -29,15 +29,16 @@ Configure and build:
 
 ```bash
 cmake -S . -B Build -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DCMAKE_PREFIX_PATH=~/.local/Qt/6.8.3/gcc_64 -DAPD_QT_DEPLOY=OFF
+  -DCMAKE_PREFIX_PATH=~/.local/Qt/6.8.3/gcc_64
 cmake --build Build -j"$(nproc)"
 ```
 
 The Linux platform files are added to `apd_core` automatically as they appear in the source tree.
 Current Linux status: the application builds and starts, scans BLE advertisements through BlueZ,
-shows battery state in the tray, controls MPRIS players for ear detection, and writes an XDG
-autostart entry. Quick Connect uses the null backend, the taskbar battery dock is Windows-only,
-and the updater finds no Linux release assets.
+shows battery status in the tray, controls MPRIS players for ear detection, reconnects the bound
+AirPods through BlueZ for Quick Connect, and writes an XDG autostart entry. Update checks are
+disabled because releases only carry Windows installers, and the taskbar battery dock is
+Windows-only. See [Package for Linux](#package-for-linux) to build a `.deb` or `.tar.gz`.
 
 ## Windows prerequisites
 
@@ -94,9 +95,12 @@ ctest --test-dir Build -C RelWithDebInfo --output-on-failure
 ```
 
 CTest runs the domain, quick-connect, animation, and UI rendering suites registered in
-[Tests/CMakeLists.txt](/Tests/CMakeLists.txt). Animation and UI rendering tests need an
-interactive Windows desktop; animation tests also use the Windows multimedia backend.
-Qt runtime DLLs must be deployed beside the test executables or available on `PATH`.
+[Tests/CMakeLists.txt](/Tests/CMakeLists.txt). On Linux, drop the `-C RelWithDebInfo` argument and
+run `ctest --test-dir Build --output-on-failure`.
+
+The animation and UI rendering suites create widgets, so they need an interactive desktop session
+and the multimedia backend the platform provides. On Windows, Qt runtime DLLs must be deployed
+beside the test executables or available on `PATH`.
 
 ## Package for Linux
 
