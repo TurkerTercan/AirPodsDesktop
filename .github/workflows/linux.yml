@@ -103,7 +103,18 @@ jobs:
         run: cmake --build Build --parallel 2
 
       - name: Test
-        run: xvfb-run -a ctest --test-dir Build --output-on-failure
+        run: |
+          set +e
+          xvfb-run -a ctest --test-dir Build --output-on-failure 2>&1 | tee ctest.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            # Job logs need repository access; a check annotation is readable through the public
+            # API, so publish the tail that names the failing tests.
+            body=$(tail -n 150 ctest.log | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=CTest failure details::${body}"
+          fi
+          exit "$status"
 
       - name: Package
         run: cd Build && cpack
