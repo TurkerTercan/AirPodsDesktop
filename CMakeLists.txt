@@ -223,7 +223,9 @@ else()
     )
     # Upstream defaults its test suite on, and its add_test entries point at an executable the
     # shared output directory moves elsewhere, so they register as failing CTest cases.
-    set(CXXOPTS_BUILD_TESTS OFF)
+    # It declares cmake_minimum_required(VERSION 3.1), so CMP0077 is OLD and its option()
+    # discards a plain variable of the same name; the cache entry is what it actually reads.
+    set(CXXOPTS_BUILD_TESTS OFF CACHE BOOL "Build cxxopts tests" FORCE)
     FetchContent_MakeAvailable(cxxopts)
     message("Fetch 'cxxopts' done.")
 
