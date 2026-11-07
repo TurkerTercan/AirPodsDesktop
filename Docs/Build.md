@@ -14,8 +14,11 @@ Prerequisites:
 
   ```bash
   uv tool run --from aqtinstall aqt install-qt linux desktop 6.8.3 linux_gcc_64 \
-    -O ~/.local/Qt --modules qtmultimedia qtsvg qttools
+    -O ~/.local/Qt --modules qtmultimedia
   ```
+
+  `qtsvg` and `qttools` are part of the base Linux desktop package; passing them as modules
+  makes aqtinstall fail because it cannot locate them as separate archives.
 
 - System headers:
 
