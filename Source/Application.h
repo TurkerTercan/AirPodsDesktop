@@ -56,7 +56,10 @@ class ApdApplication : public SingleApplication, private Core::Settings::ApplyOb
 
 public:
     static void PreConstruction();
-    ApdApplication(int argc, char *argv[]);
+    // QCoreApplication keeps a reference to argc for the whole application lifetime, so the
+    // reference must bind to main()'s argc rather than to a temporary copy on this constructor's
+    // stack frame.
+    ApdApplication(int &argc, char *argv[]);
     ~ApdApplication() override;
 
     bool Prepare(int argc, char *argv[]);
