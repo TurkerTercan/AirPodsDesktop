@@ -2,10 +2,6 @@
 
 ## Status
 
-_Updated 2026-11-09. The phases below are the original plan; this section is the live state._
-
-### Complete
-
 - [x] **Phase 1.1 — CMake platform support.** Windows-only gate split into `WIN32` / Linux
       (`APD_OS_LINUX`), Windows-only flags and libraries guarded, Linux platform sources collected
       automatically, Linux Qt deployment via `qt_generate_deploy_app_script`.
@@ -15,48 +11,15 @@ _Updated 2026-11-09. The phases below are the original plan; this section is the
       `AdvertisementWatcher` on BlueZ via QtDBus (`SetDiscoveryFilter` with `Transport=le` and
       `DuplicateData=true`, `PropertiesChanged`/`InterfacesAdded` parsing, Apple vendor id 76).
       `GlobalMedia_linux` drives MPRIS, `AutoStart_linux` writes an XDG autostart entry.
-- [x] **Phase 3 — Tray and GUI.** Tray icon and quick-connect menu; the theme follows the desktop
-      colour scheme through the freedesktop portal (`c76c4ff`).
-- [x] **Phase 4 — Media control.** MPRIS pause/resume on ear detection. The bounded MPRIS calls and
-      the pause/resume bookkeeping are covered by `GlobalMediaTests`, and advertisement merging by
-      `AirPodsDomainTests` (`f1b370f`).
-- [x] **Phase 6 — Auto-start.** XDG autostart entry; no systemd user service is needed.
-- [x] **Quick connect.** BlueZ backend (`Device1.Connect` plus `PropertiesChanged` observation,
-      `3fbf715`) replaced the original null backend.
-- [x] **Packaging.** Relocatable bundle, DEB and TGZ through CPack (`bb7aa72`); `qt.conf`, `$ORIGIN`
-      runpaths, translations and the desktop entry are part of the bundle.
-- [x] **CI.** Linux and Windows jobs build, test and package on pushes and pull requests
-      (`0df3737`, `5a8aee4`, `1c15088`).
 - [x] **Build and startup verified.** `Build-linux/Binary/AirPodsDesktop` links and runs headlessly;
       startup log is clean apart from the updater (no network, no Linux release assets).
 - [x] **Intermittent startup segfault fixed.** `ApdApplication` took `argc` by value, so the reference
       `QCoreApplicationPrivate` keeps to it dangled once the constructor returned. Qt's XCB
       integration later called `QCoreApplication::arguments()` (via `wmClass()`), walked a garbage
       argument count, and crashed. `argc` is now taken by reference and binds to `main()`'s copy.
-- [x] **Translations.** Sources refreshed and Turkish completed (`30035a9`).
-
-### Remaining
-
-- [ ] **Hardware verification.** Pairing, binding, battery display and quick connect were exercised
-      with AirPods Pro 3 on 2026-11-09. Three findings are still open:
-      - Ear detection and MPRIS pause/resume work when a proximity packet arrives, but the tested
-        BARROT USB dongle delivers them only every 10–90 seconds, so a bud leaving or entering the
-        ear can take up to a minute to register. The built-in Intel adapter was reported prompt
-        before the dongle was installed; that has not been re-verified.
-      - The case battery is never displayed. Docked pods drop the classic link, and the current code
-        stops the advertisement watcher and rejects advertisements while the link is down — exactly
-        when the case broadcasts. Log capture confirms docked-pod advertisements (both pods in case,
-        case battery present) reach the host only if the watcher keeps running.
-      - Pause/resume uses the MPRIS `PlayPause` toggle. The AirPods pause the player themselves when
-        a bud is removed, so the toggle can cancel that pause and keep the music playing. Explicit
-        `Play`/`Pause` calls are the intended fix.
-- [ ] **Linux release assets.** No Linux release is published, so the updater remains a no-op on
-      Linux.
-- [ ] **GNOME tray.** GNOME needs the AppIndicator extension for the tray icon to appear.
-- [ ] **Wayland.** The test suite runs under Xvfb; a Wayland session is not verified.
-- [ ] **Low-latency mode and codecs.** The silent-stream implementation runs on Linux, but its
-      effect and aptX/LDAC selection through PipeWire are unmeasured.
-- [ ] **Taskbar battery dock.** Windows-only by design; Linux keeps the no-op `TaskbarStatus`.
+- [ ] **Hardware verification.** Pair AirPods, bind them in the UI, confirm battery/ear detection.
+- [ ] **Remaining gaps.** Quick Connect null backend, GNOME tray needs AppIndicator extension,
+      system dark-mode detection, updater has no Linux assets.
 
 ## Executive Summary
 AirPodsDesktop uses Qt with platform-specific subsystems for Bluetooth, media control, auto-start, and audio management. The codebase has well-structured abstract interfaces, making it suitable for a Linux port. Estimated effort: **2-3 months** for a complete port with full feature parity, or **3-4 weeks** for a minimal viable port (Bluetooth + battery display only).
@@ -149,26 +112,19 @@ Apple uses manufacturer data with company ID 0x004C (76 decimal). The payload fo
 **Advertisement Format (Paired Mode, 27 bytes total):**
 ```
 Byte 0-2:  0x07 0x19 0x01 (protocol header)
-Byte 3-4:  Model id, little-endian (e.g., 0x2014 = AirPods Pro 2, 0x2027 = AirPods Pro 3
-           as the bytes 27 20)
-Byte 5:    Status bits; bit1 = broadcasting bud in ear, bit2 = both pods in case,
-           bit3 = other bud in ear, bit5 = 1 when the left bud broadcasts
-Byte 6:    Broadcasting bud battery (low nibble) + other bud battery (high nibble)
-Byte 7:    Case battery (low nibble), then charging flags in the high nibble:
-           bit4 = broadcasting bud, bit5 = other bud, bit6 = case
-Byte 8:    Lid: bit3 = closed, bits 0-2 = lid switch count
-Byte 9-26: Per-packet hash/encrypted payload (identifying; do not log)
+Byte 3-4:  Device model (e.g., 0x0220 = AirPods 1)
+Byte 5:    UTP flags
+Byte 6:    Case battery level (bits 0-3) + charging flag (bit 6)
+Byte 7:    Left bud battery (bits 0-3) + right bud battery (bits 4-7)
+Byte 8:    Lid state
+Byte 9-26: Encrypted status data
 ```
 
-`Source/Core/AppleCP.h` is the source of truth; the C below mirrors its layout.
+**Battery values use 10% steps (0-10), not exact percentages. Value 0xF = unavailable.**
 
-**Battery values use 10% steps (0-10), not exact percentages. Values above 10 (e.g. 0xF) =
-unavailable.**
-
-```c
+```cpp
 // C example: Parse AirPods battery from manufacturer data
 #include <stdint.h>
-#include <stdbool.h>
 
 typedef struct {
     int model;
@@ -188,18 +144,14 @@ bool parse_airpods_battery(const uint8_t *data, int len, AirPodsBattery *out) {
     if (len < 27 || data[0] != 0x07 || data[1] != 0x19 || data[2] != 0x01) {
         return false;  // Not AirPods format
     }
-
-    const bool from_left = (data[5] & 0x20) != 0;
-    const uint8_t curr = data[6] & 0x0F;        // the broadcasting bud
-    const uint8_t anot = (data[6] >> 4) & 0x0F; // the other bud
-
+    
     out->model = data[3] | (data[4] << 8);
-    out->case_battery = percent(data[7] & 0x0F);
-    out->left_battery = percent(from_left ? curr : anot);
-    out->right_battery = percent(from_left ? anot : curr);
-    out->case_charging = (data[7] & 0x40) != 0;
-    out->lid_open = (data[8] & 0x08) == 0;
-
+    out->case_battery = percent(data[6] & 0x0F);
+    out->left_battery = percent(data[7] & 0x0F);
+    out->right_battery = percent((data[7] >> 4) & 0x0F);
+    out->case_charging = (data[6] & 0x40) != 0;
+    out->lid_open = (data[6] & 0x08) != 0;
+    
     return true;
 }
 ```
@@ -250,9 +202,8 @@ QDBusInterface player("org.mpris.MediaPlayer2.playerctl",
     "/org/mpris/MediaPlayer2",
     "org.mpris.MediaPlayer2.Player");
 
-// Control playback. Use the explicit methods, not "PlayPause": the AirPods pause the player
-// themselves when a bud is removed, and a toggle would turn the music back on.
-player.call("Pause");
+// Control playback
+player.call("PlayPause");
 ```
 
 ### 4.2 Media Key Handling
@@ -308,15 +259,14 @@ Optional: Provide systemd user service for background operation.
 - **Wayland/X11**: Test both display servers
 
 ### 7.2 Feature Parity Checklist
-- [x] AirPods battery level display (buds yes; case battery blocked by the docked-pod finding in
-      [Status](#remaining))
-- [x] Connection status indicator
-- [x] Media playback control (ear detection through MPRIS)
-- [x] Quick connect/disconnect (BlueZ backend)
-- [x] Low-latency audio mode (silent-stream implementation; effect on Linux unmeasured)
-- [x] Auto-start on boot (XDG autostart)
-- [x] Tray icon with menu (GNOME needs the AppIndicator extension)
-- [x] Settings persistence
+- [ ] AirPods battery level display
+- [ ] Connection status indicator
+- [ ] Media playback control
+- [ ] Quick connect/disconnect
+- [ ] Low-latency audio mode
+- [ ] Auto-start on boot
+- [ ] Tray icon with menu
+- [ ] Settings persistence
 
 ---
 
