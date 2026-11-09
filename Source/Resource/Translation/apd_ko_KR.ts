@@ -60,6 +60,11 @@ Enjoy it all.</source>
         <source>Please select your AirPods device below.</source>
         <translation>아래에서 AirPods를 선택합니다.</translation>
     </message>
+    <message>
+        <source>No paired device found.
+You need to pair your AirPods in the system Bluetooth settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Gui::SettingsWindow</name>
@@ -152,16 +157,20 @@ Enjoy it all.</source>
         <translation>%1 연결 시간이 초과되었습니다.</translation>
     </message>
     <message>
-        <source>Windows could not connect to %1.</source>
-        <translation>Windows에서 %1에 연결하지 못했습니다.</translation>
-    </message>
-    <message>
         <source>Quick connect</source>
         <translation>빠른 연결</translation>
     </message>
     <message>
         <source>Low audio latency (may cause hiss)</source>
         <translation>오디오 지연 최소화(잡음이 발생할 수 있음)</translation>
+    </message>
+    <message>
+        <source>Could not connect to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show main window</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -232,15 +241,6 @@ Enjoy it all.</source>
     <message>
         <source>AirPodsDesktop information</source>
         <translation>AirPodsDesktop 정보</translation>
-    </message>
-</context>
-<context>
-    <name>QMessageBox</name>
-    <message>
-        <source>No paired device found.
-You need to pair your AirPods in Windows Bluetooth Settings first.</source>
-        <translation>페어링된 AirPods이 없습니다.
-Windows의 Bluetooth 설정에서 AirPods을 페어링해야 합니다.</translation>
     </message>
 </context>
 <context>

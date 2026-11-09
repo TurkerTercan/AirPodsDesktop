@@ -60,6 +60,11 @@ Enjoy it all.</source>
         <source>Please select your AirPods device below.</source>
         <translation>AirPodsを以下から選んでください。</translation>
     </message>
+    <message>
+        <source>No paired device found.
+You need to pair your AirPods in the system Bluetooth settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Gui::SettingsWindow</name>
@@ -156,12 +161,16 @@ Enjoy it all.</source>
         <translation>%1 への接続がタイムアウトしました。</translation>
     </message>
     <message>
-        <source>Windows could not connect to %1.</source>
-        <translation>Windows は %1 に接続できませんでした。</translation>
-    </message>
-    <message>
         <source>Quick connect</source>
         <translation>クイック接続</translation>
+    </message>
+    <message>
+        <source>Could not connect to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show main window</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -232,15 +241,6 @@ Enjoy it all.</source>
     <message>
         <source>AirPodsDesktop information</source>
         <translation>AirPodsDesktop について</translation>
-    </message>
-</context>
-<context>
-    <name>QMessageBox</name>
-    <message>
-        <source>No paired device found.
-You need to pair your AirPods in Windows Bluetooth Settings first.</source>
-        <translation>ペアリング済みのデバイスが見つかりません。
-先に Windows の Bluetooth 設定で AirPods をペアリングしてください。</translation>
     </message>
 </context>
 <context>

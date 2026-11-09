@@ -60,6 +60,11 @@ Divertiti.</translation>
         <source>Please select your AirPods device below.</source>
         <translation>Per favore seleziona qui sotto il tuo dispositivo AirPods.</translation>
     </message>
+    <message>
+        <source>No paired device found.
+You need to pair your AirPods in the system Bluetooth settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Gui::SettingsWindow</name>
@@ -153,16 +158,20 @@ Divertiti.</translation>
         <translation>Tempo scaduto durante la connessione a %1.</translation>
     </message>
     <message>
-        <source>Windows could not connect to %1.</source>
-        <translation>Windows non è riuscito a connettersi a %1.</translation>
-    </message>
-    <message>
         <source>Quick connect</source>
         <translation>Connessione rapida</translation>
     </message>
     <message>
         <source>Low audio latency (may cause hiss)</source>
         <translation>Bassa latenza audio (potrebbe causare fruscii)</translation>
+    </message>
+    <message>
+        <source>Could not connect to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show main window</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -233,15 +242,6 @@ Divertiti.</translation>
     <message>
         <source>AirPodsDesktop information</source>
         <translation>Informazioni su AirPodsDesktop</translation>
-    </message>
-</context>
-<context>
-    <name>QMessageBox</name>
-    <message>
-        <source>No paired device found.
-You need to pair your AirPods in Windows Bluetooth Settings first.</source>
-        <translation>Nessun dispositivo abbinato trovato.
-Devi prima abbinare le tue AirPods nelle impostazioni Bluetooth di Windows.</translation>
     </message>
 </context>
 <context>

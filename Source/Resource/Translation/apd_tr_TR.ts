@@ -60,6 +60,12 @@ Keyfini çıkarın.</translation>
         <source>Please select your AirPods device below.</source>
         <translation>Lütfen aşağıdan AirPods cihazınızı seçin.</translation>
     </message>
+    <message>
+        <source>No paired device found.
+You need to pair your AirPods in the system Bluetooth settings first.</source>
+        <translation>Eşleşmiş cihaz bulunamadı.
+Önce AirPods&apos;unuzu sistem Bluetooth ayarlarından eşleştirmeniz gerekir.</translation>
+    </message>
 </context>
 <context>
     <name>Gui::SettingsWindow</name>
@@ -152,16 +158,20 @@ Keyfini çıkarın.</translation>
         <translation>%1 bağlantısı zaman aşımına uğradı.</translation>
     </message>
     <message>
-        <source>Windows could not connect to %1.</source>
-        <translation>Windows %1 cihazına bağlanamadı.</translation>
-    </message>
-    <message>
         <source>Quick connect</source>
         <translation>Hızlı bağlantı</translation>
     </message>
     <message>
         <source>Low audio latency (may cause hiss)</source>
         <translation>Düşük ses gecikmesi (dip sese neden olabilir)</translation>
+    </message>
+    <message>
+        <source>Could not connect to %1.</source>
+        <translation>%1 cihazına bağlanılamadı.</translation>
+    </message>
+    <message>
+        <source>Show main window</source>
+        <translation>Ana pencereyi göster</translation>
     </message>
 </context>
 <context>
@@ -232,15 +242,6 @@ Keyfini çıkarın.</translation>
     <message>
         <source>AirPodsDesktop information</source>
         <translation>AirPodsDesktop bilgileri</translation>
-    </message>
-</context>
-<context>
-    <name>QMessageBox</name>
-    <message>
-        <source>No paired device found.
-You need to pair your AirPods in Windows Bluetooth Settings first.</source>
-        <translation>Eşleşmiş cihaz bulunamadı.
-Önce Windows Bluetooth Ayarları&apos;ndan AirPods&apos;unuzu eşleştirmeniz gerekir.</translation>
     </message>
 </context>
 <context>

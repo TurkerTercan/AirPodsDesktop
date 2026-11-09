@@ -60,6 +60,11 @@ Aproveite.</translation>
         <source>Please select your AirPods device below.</source>
         <translation>Selecione os seus AirPods abaixo.</translation>
     </message>
+    <message>
+        <source>No paired device found.
+You need to pair your AirPods in the system Bluetooth settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Gui::SettingsWindow</name>
@@ -152,16 +157,20 @@ Aproveite.</translation>
         <translation>A ligação a %1 excedeu o tempo limite.</translation>
     </message>
     <message>
-        <source>Windows could not connect to %1.</source>
-        <translation>O Windows não conseguiu ligar-se a %1.</translation>
-    </message>
-    <message>
         <source>Quick connect</source>
         <translation>Ligação rápida</translation>
     </message>
     <message>
         <source>Low audio latency (may cause hiss)</source>
         <translation>Baixa latência de áudio (pode causar ruído)</translation>
+    </message>
+    <message>
+        <source>Could not connect to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show main window</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -232,15 +241,6 @@ Aproveite.</translation>
     <message>
         <source>AirPodsDesktop information</source>
         <translation>AirPodsDesktop informações</translation>
-    </message>
-</context>
-<context>
-    <name>QMessageBox</name>
-    <message>
-        <source>No paired device found.
-You need to pair your AirPods in Windows Bluetooth Settings first.</source>
-        <translation>Nenhum dispositivo emparelhado foi encontrado.
-Precisa primeiro de emparelhar os seus AirPods nas definições de Bluetooth do Windows.</translation>
     </message>
 </context>
 <context>

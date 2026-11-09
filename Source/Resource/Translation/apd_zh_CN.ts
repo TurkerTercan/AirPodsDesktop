@@ -60,6 +60,11 @@ Enjoy it all.</source>
         <source>Please select your AirPods device below.</source>
         <translation>请在下方选择您的 AirPods 设备。</translation>
     </message>
+    <message>
+        <source>No paired device found.
+You need to pair your AirPods in the system Bluetooth settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Gui::SettingsWindow</name>
@@ -156,12 +161,16 @@ Enjoy it all.</source>
         <translation>连接 %1 超时。</translation>
     </message>
     <message>
-        <source>Windows could not connect to %1.</source>
-        <translation>Windows 无法连接 %1。</translation>
-    </message>
-    <message>
         <source>Quick connect</source>
         <translation>快速连接</translation>
+    </message>
+    <message>
+        <source>Could not connect to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show main window</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -232,15 +241,6 @@ Enjoy it all.</source>
     <message>
         <source>AirPodsDesktop information</source>
         <translation>AirPodsDesktop 信息</translation>
-    </message>
-</context>
-<context>
-    <name>QMessageBox</name>
-    <message>
-        <source>No paired device found.
-You need to pair your AirPods in Windows Bluetooth Settings first.</source>
-        <translation>未找到已配对的设备。
-您需要先在 Windows 蓝牙设置中配对您的 AirPods。</translation>
     </message>
 </context>
 <context>

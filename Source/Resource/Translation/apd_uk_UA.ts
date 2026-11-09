@@ -60,6 +60,11 @@ Enjoy it all.</source>
         <source>Please select your AirPods device below.</source>
         <translation>Будь ласка, оберіть свій пристрій AirPods нижче.</translation>
     </message>
+    <message>
+        <source>No paired device found.
+You need to pair your AirPods in the system Bluetooth settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Gui::SettingsWindow</name>
@@ -152,16 +157,20 @@ Enjoy it all.</source>
         <translation>Час очікування підключення до %1 минув.</translation>
     </message>
     <message>
-        <source>Windows could not connect to %1.</source>
-        <translation>Windows не вдалося підключитися до %1.</translation>
-    </message>
-    <message>
         <source>Quick connect</source>
         <translation>Швидке підключення</translation>
     </message>
     <message>
         <source>Low audio latency (may cause hiss)</source>
         <translation>Низька затримка звуку (може спричинити шипіння)</translation>
+    </message>
+    <message>
+        <source>Could not connect to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show main window</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -232,15 +241,6 @@ Enjoy it all.</source>
     <message>
         <source>AirPodsDesktop information</source>
         <translation>Інформація про AirPodsDesktop</translation>
-    </message>
-</context>
-<context>
-    <name>QMessageBox</name>
-    <message>
-        <source>No paired device found.
-You need to pair your AirPods in Windows Bluetooth Settings first.</source>
-        <translation>Спарений пристрій не знайдено.
-Спочатку потрібно підключити AirPods у налаштуваннях Bluetooth Windows.</translation>
     </message>
 </context>
 <context>
