@@ -23,6 +23,9 @@ As of 2026-11-13, the Linux port builds and runs, with the main desktop features
       device, but a timeout alone does not establish that this is the cause.
 - [ ] Verify Wayland and measure low-latency/codec behavior on Linux.
 - [ ] Decide on Linux release assets; the updater is disabled on Linux until suitable assets exist.
+      Local RelWithDebInfo DEB and tarball builds succeeded and their extracted payloads matched;
+      dependencies resolved on the build host. A Release build, clean-machine installation and
+      packaged application startup have not yet been verified.
 
 GNOME requires an AppIndicator extension for the tray. The taskbar battery dock is Windows-only.
 See `Docs/Build.md` for build, packaging and noise-control limitations.
