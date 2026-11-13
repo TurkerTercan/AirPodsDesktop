@@ -117,7 +117,9 @@ AUTOMOC.
    manufacturer data must carry Apple's vendor id `76` and pass `AppleCP::AirPods::IsValid`.
 3. `Details::Advertisement` parses the fixed 27-byte `ProximityPairing` packet into an `AdvState`.
 4. `Details::StateManager::OnAdvReceived` merges the two sides, applies the `rssi_min` floor, and
-   arms 10s "lost" / per-side reset timers. It emits an `UpdateEvent { oldState, newState }`.
+   arms the "lost" / per-side reset timers (10 s on Windows, 60 s on Linux, where BlueZ reports
+   device-property changes far less often than WinRT delivers advertisements). It emits an
+   `UpdateEvent { oldState, newState }`.
 5. `Manager` raises Qt signals — `StateUpdated`, `Disconnected`, `LidToggled`,
    `ScannerAvailabilityChanged`, `BoundDeviceUnavailable`.
 6. `ApdApplication::ConnectAirPodsManager()` is the single fan-out point: it wires those signals to

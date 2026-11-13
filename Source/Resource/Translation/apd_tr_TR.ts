@@ -173,6 +173,42 @@ You need to pair your AirPods in the system Bluetooth settings first.</source>
         <source>Show main window</source>
         <translation>Ana pencereyi göster</translation>
     </message>
+    <message>
+        <source>Noise Control</source>
+        <translation>Gürültü Denetimi</translation>
+    </message>
+    <message>
+        <source>Noise Cancellation</source>
+        <translation>Gürültü Engelleme</translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation>Şeffaflık</translation>
+    </message>
+    <message>
+        <source>Adaptive</source>
+        <translation>Uyarlanabilir</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Kapalı</translation>
+    </message>
+    <message>
+        <source>Noise control unavailable: %1</source>
+        <translation>Gürültü denetimi kullanılamıyor: %1</translation>
+    </message>
+    <message>
+        <source>Noise Control (unsupported or unknown)</source>
+        <translation>Gürültü Denetimi (desteklenmiyor veya bilinmiyor)</translation>
+    </message>
+    <message>
+        <source>Off was not confirmed. You may need to enable Off on an Apple device first.</source>
+        <translation>Kapalı modu doğrulanamadı. Önce bir Apple aygıtında Kapalı modunu etkinleştirmeniz gerekebilir.</translation>
+    </message>
+    <message>
+        <source>The requested noise control mode was not confirmed.</source>
+        <translation>İstenen gürültü denetimi modu doğrulanamadı.</translation>
+    </message>
 </context>
 <context>
     <name>Gui::UpdateWindow</name>

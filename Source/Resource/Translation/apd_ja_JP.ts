@@ -172,6 +172,42 @@ You need to pair your AirPods in the system Bluetooth settings first.</source>
         <source>Show main window</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Noise Control</source>
+        <translation>ノイズコントロール</translation>
+    </message>
+    <message>
+        <source>Noise Cancellation</source>
+        <translation>ノイズキャンセリング</translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation>外部音取り込み</translation>
+    </message>
+    <message>
+        <source>Adaptive</source>
+        <translation>適応型</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>オフ</translation>
+    </message>
+    <message>
+        <source>Noise control unavailable: %1</source>
+        <translation>ノイズコントロールを使用できません: %1</translation>
+    </message>
+    <message>
+        <source>Noise Control (unsupported or unknown)</source>
+        <translation>ノイズコントロール（非対応または不明）</translation>
+    </message>
+    <message>
+        <source>Off was not confirmed. You may need to enable Off on an Apple device first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The requested noise control mode was not confirmed.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Gui::UpdateWindow</name>

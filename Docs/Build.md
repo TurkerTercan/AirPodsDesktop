@@ -43,6 +43,12 @@ AirPods through BlueZ for Quick Connect, and writes an XDG autostart entry. Upda
 disabled because releases only carry Windows installers, and the taskbar battery dock is
 Windows-only. See [Package for Linux](#package-for-linux) to build a `.deb` or `.tar.gz`.
 
+Linux noise control uses the bound classic Bluetooth device and requires BlueZ to expose a
+recognized product ID through that device's `Modalias`. If that optional property is absent or
+unrecognized, the tray shows noise control as unsupported or unknown and does not open an AAP
+socket. BLE advertisements are not used to guess the bound device's model. AAP support and
+handshake behavior still require real-device verification.
+
 ## Windows prerequisites
 
 AirPodsDesktop uses C++20 and builds for **Windows x64** with:
