@@ -67,6 +67,14 @@ TrayIcon::TrayIcon(
     _menu->addAction(_actionNewVersion);
     _menu->addAction(_actionLowAudioLatency);
 #if defined APD_OS_LINUX
+    _actionQuickConnect->setObjectName("quickConnectAction");
+    _actionQuickDisconnect->setObjectName("quickDisconnectAction");
+    _actionQuickConnect->setText(tr("Connect selected device"));
+    _actionQuickDisconnect->setText(tr("Disconnect selected device"));
+    connect(_actionQuickConnect, &QAction::triggered, this, [this] { _quickConnect.Request(); });
+    connect(_actionQuickDisconnect, &QAction::triggered, this, [this] { _quickConnect.RequestDisconnect(); });
+    _menu->addAction(_actionQuickConnect);
+    _menu->addAction(_actionQuickDisconnect);
     _noiseMenu = _menu->addMenu(tr("Noise Control"));
     _noiseMenu->setObjectName("noiseControlMenu");
     _noiseMenu->menuAction()->setVisible(false);
@@ -186,6 +194,8 @@ void TrayIcon::UpdateNoiseControl()
 void TrayIcon::Repaint()
 {
 #if defined APD_OS_LINUX
+    _actionQuickConnect->setText(tr("Connect selected device"));
+    _actionQuickDisconnect->setText(tr("Disconnect selected device"));
     UpdateNoiseControl();
 #endif
     QString toolTipContent;
@@ -502,6 +512,23 @@ void TrayIcon::OnQuickConnectOutcome(Core::QuickConnect::Outcome outcome, const 
         break;
     case Core::QuickConnect::Outcome::Failed:
         text = tr("Could not connect to %1.").arg(deviceName);
+        icon = QSystemTrayIcon::Warning;
+        break;
+    case Core::QuickConnect::Outcome::AlreadyDisconnected:
+        text = tr("%1 is already disconnected.").arg(deviceName);
+        break;
+    case Core::QuickConnect::Outcome::DisconnectStarted:
+        text = tr("Disconnecting from %1...").arg(deviceName);
+        break;
+    case Core::QuickConnect::Outcome::Disconnected:
+        text = tr("%1 disconnected.").arg(deviceName);
+        break;
+    case Core::QuickConnect::Outcome::DisconnectFailed:
+        text = tr("Could not disconnect from %1.").arg(deviceName);
+        icon = QSystemTrayIcon::Warning;
+        break;
+    case Core::QuickConnect::Outcome::DisconnectTimedOut:
+        text = tr("Disconnection from %1 timed out.").arg(deviceName);
         icon = QSystemTrayIcon::Warning;
         break;
     default:

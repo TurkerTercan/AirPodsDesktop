@@ -209,6 +209,34 @@ You need to pair your AirPods in the system Bluetooth settings first.</source>
         <source>The requested noise control mode was not confirmed.</source>
         <translation>İstenen gürültü denetimi modu doğrulanamadı.</translation>
     </message>
+    <message>
+        <source>Connect selected device</source>
+        <translation>Seçili cihaza bağlan</translation>
+    </message>
+    <message>
+        <source>Disconnect selected device</source>
+        <translation>Seçili cihazın bağlantısını kes</translation>
+    </message>
+    <message>
+        <source>%1 is already disconnected.</source>
+        <translation>%1 zaten bağlı değil.</translation>
+    </message>
+    <message>
+        <source>Disconnecting from %1...</source>
+        <translation>%1 bağlantısı kesiliyor...</translation>
+    </message>
+    <message>
+        <source>%1 disconnected.</source>
+        <translation>%1 bağlantısı kesildi.</translation>
+    </message>
+    <message>
+        <source>Could not disconnect from %1.</source>
+        <translation>%1 bağlantısı kesilemedi.</translation>
+    </message>
+    <message>
+        <source>Disconnection from %1 timed out.</source>
+        <translation>%1 bağlantısını kesme işlemi zaman aşımına uğradı.</translation>
+    </message>
 </context>
 <context>
     <name>Gui::UpdateWindow</name>

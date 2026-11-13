@@ -815,6 +815,40 @@ private Q_SLOTS:
     }
 
 #if defined APD_OS_LINUX
+    void TrayDisconnectTargetsQuickConnectSelection()
+    {
+        class FakeBackend final : public Core::QuickConnect::Backend {
+        public:
+            std::vector<Core::QuickConnect::Device> ListDevices(std::stop_token) override
+            {
+                return {{"selected", "Selected headset", true}};
+            }
+            bool RequestReconnect(const QString &, std::stop_token) override { return false; }
+            bool RequestDisconnect(const QString &id, std::stop_token) override
+            {
+                return id == "selected";
+            }
+        };
+        auto backend = std::make_shared<FakeBackend>();
+        Core::QuickConnect::Controller quickConnect{backend};
+        quickConnect.SetEnabled(true);
+        quickConnect.SetDeviceId("selected");
+        Gui::TrayIcon tray{[] { return 0; }, quickConnect};
+        auto *connectAction = tray.findChild<QAction *>("quickConnectAction");
+        auto *disconnectAction = tray.findChild<QAction *>("quickDisconnectAction");
+        QVERIFY(connectAction && disconnectAction);
+        QCOMPARE(connectAction->text(), QStringLiteral("Connect selected device"));
+        QCOMPARE(disconnectAction->text(), QStringLiteral("Disconnect selected device"));
+        QSignalSpy spy{&quickConnect, &Core::QuickConnect::Controller::OutcomeChanged};
+        disconnectAction->trigger();
+        QTRY_COMPARE(spy.count(), 1);
+        QCOMPARE(spy.last().at(0).value<Core::QuickConnect::Outcome>(),
+                 Core::QuickConnect::Outcome::DisconnectStarted);
+        quickConnect.OnEndpointStateChanged("selected", false);
+        QCOMPARE(spy.last().at(0).value<Core::QuickConnect::Outcome>(),
+                 Core::QuickConnect::Outcome::Disconnected);
+    }
+
     void TrayNoiseControlReflectsReportedMode()
     {
         class FakeBackend final : public Core::NoiseControl::Backend {

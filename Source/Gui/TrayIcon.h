@@ -96,6 +96,8 @@ private:
     TrayActivationState _trayActivationState;
     QTimer _singleClickTimer{this};
 #if defined APD_OS_LINUX
+    QAction *_actionQuickConnect = new QAction{this};
+    QAction *_actionQuickDisconnect = new QAction{this};
     Core::NoiseControl::Controller *_noiseControl{};
     QMenu *_noiseMenu{};
     std::vector<QAction *> _noiseActions;
